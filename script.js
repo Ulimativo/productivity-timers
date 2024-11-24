@@ -21,6 +21,9 @@ class ProductivityTimer {
         this.initializeElements();
         this.setupEventListeners();
         this.loadThemePreference();
+        this.setupKeyboardShortcuts();
+        this.initializeProgressBar();
+        this.initializeModal();
     }
 
     initializeElements() {
@@ -46,6 +49,10 @@ class ProductivityTimer {
         this.fullscreenSettings = document.getElementById('fullscreenSettings');
         this.container = document.querySelector('.container');
         this.enterFullscreenBtn = document.getElementById('enterFullscreen');
+
+        this.shortcutsModal = document.getElementById('shortcutsModal');
+        this.helpButton = document.querySelector('.help-button');
+        this.closeModalButton = document.querySelector('.close-modal');
     }
 
     setupEventListeners() {
@@ -102,9 +109,11 @@ class ProductivityTimer {
     tick() {
         this.timeLeft--;
         this.updateDisplay();
+        this.updateProgress();
 
         if (this.timeLeft <= 0) {
             this.switchMode();
+            this.addHistoryEntry();
         }
     }
 
@@ -301,6 +310,79 @@ class ProductivityTimer {
         if (this.isBreak) {
             this.reset();
         }
+    }
+
+    setupKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName !== 'INPUT') {
+                switch(e.key.toLowerCase()) {
+                    case ' ':
+                        e.preventDefault();
+                        this.isRunning ? this.pause() : this.start();
+                        break;
+                    case 'r':
+                        this.reset();
+                        break;
+                    case 'f':
+                        if (!this.isFullscreen) this.showFullscreenMode();
+                        break;
+                    case 'escape':
+                        if (this.isFullscreen) this.exitFullscreen();
+                        break;
+                }
+            }
+        });
+    }
+
+    initializeProgressBar() {
+        this.progressFill = document.querySelector('.progress-fill');
+        this.updateProgress();
+    }
+
+    updateProgress() {
+        if (!this.progressFill) return;
+        const totalTime = this.isPomodoroMode ? 
+            (this.isBreak ? this.breakTime : this.workTime) * 60 : 
+            this.twoMinuteTime * 60;
+        const progress = ((totalTime - this.timeLeft) / totalTime) * 100;
+        this.progressFill.style.width = `${progress}%`;
+    }
+
+    addHistoryEntry() {
+        const historyList = document.getElementById('historyList');
+        const entry = document.createElement('div');
+        entry.className = 'history-item';
+        entry.innerHTML = `
+            <span>${new Date().toLocaleTimeString()}</span>
+            <span>${this.isPomodoroMode ? 'Pomodoro' : 'Two-Minute'} Session</span>
+        `;
+        historyList.insertBefore(entry, historyList.firstChild);
+    }
+
+    initializeModal() {
+        // Open modal
+        this.helpButton.addEventListener('click', () => {
+            this.shortcutsModal.style.display = 'flex';
+        });
+
+        // Close modal with button
+        this.closeModalButton.addEventListener('click', () => {
+            this.shortcutsModal.style.display = 'none';
+        });
+
+        // Close modal when clicking outside
+        this.shortcutsModal.addEventListener('click', (e) => {
+            if (e.target === this.shortcutsModal) {
+                this.shortcutsModal.style.display = 'none';
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.shortcutsModal.style.display === 'flex') {
+                this.shortcutsModal.style.display = 'none';
+            }
+        });
     }
 }
 

@@ -37,6 +37,11 @@
             <button id="start" aria-label="Start Timer">Start</button>
             <button id="pause" aria-label="Pause Timer">Pause</button>
             <button id="reset" aria-label="Reset Timer">Reset</button>
+            <div class="keyboard-shortcuts">
+                <button class="help-button" aria-label="Show Keyboard Shortcuts" title="Keyboard Shortcuts">
+                    ⌨️
+                </button>
+            </div>
         </div>
 
         <!-- Pomodoro Settings -->
@@ -90,6 +95,19 @@
         <div class="progress" role="status" aria-live="polite">
             <p>Sessions completed: <span id="sessions">0</span></p>
         </div>
+
+        <!-- Add after timer display -->
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+
+        <!-- Add after progress section -->
+        <div class="session-history">
+            <h3>Recent Sessions</h3>
+            <div class="history-list" id="historyList">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
     </div>
 
     <!-- Fullscreen Timer Container -->
@@ -120,5 +138,19 @@
             Please enable JavaScript in your browser settings.
         </div>
     </noscript>
+
+    <!-- Add modal for keyboard shortcuts -->
+    <div class="shortcuts-modal" id="shortcutsModal">
+        <div class="modal-content">
+            <h2>Keyboard Shortcuts</h2>
+            <ul class="shortcuts-list">
+                <li><span>Start/Pause Timer</span><kbd>Space</kbd></li>
+                <li><span>Reset Timer</span><kbd>R</kbd></li>
+                <li><span>Toggle Fullscreen</span><kbd>F</kbd></li>
+                <li><span>Exit Fullscreen/Modal</span><kbd>Esc</kbd></li>
+            </ul>
+            <button class="close-modal">Close</button>
+        </div>
+    </div>
 </body>
 </html>
