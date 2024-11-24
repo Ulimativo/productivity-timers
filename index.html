@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Productivity Timer with Pomodoro, Two-Minute Rule, and Fullscreen modes">
+    <title>Productivity Timer</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.png">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>Productivity Timer</h1>
+
+        <!-- Mode Selection and Theme Toggle -->
+        <div class="timer-mode">
+            <select id="modeSelect" class="mode-select" aria-label="Timer Mode Selection">
+                <option value="pomodoro">Pomodoro Timer</option>
+                <option value="twoMinute">Two-Minute Rule</option>
+                <option value="fullscreen">Fullscreen Timer</option>
+            </select>
+            <button id="darkModeToggle" class="theme-toggle" aria-label="Toggle Dark Mode">🌙</button>
+        </div>
+
+        <!-- Main Timer Display -->
+        <div class="timer-display" role="timer" aria-live="polite">
+            <span id="minutes">25</span>:<span id="seconds">00</span>
+        </div>
+
+        <!-- Timer Controls -->
+        <div class="controls">
+            <button id="start" aria-label="Start Timer">Start</button>
+            <button id="pause" aria-label="Pause Timer">Pause</button>
+            <button id="reset" aria-label="Reset Timer">Reset</button>
+        </div>
+
+        <!-- Pomodoro Settings -->
+        <div class="settings" id="pomodoroSettings">
+            <div class="setting-item">
+                <label for="workTime">Work Time (minutes):</label>
+                <input type="number" 
+                       id="workTime" 
+                       value="25" 
+                       min="1" 
+                       max="120" 
+                       aria-label="Work Time in Minutes">
+            </div>
+            <div class="setting-item">
+                <label for="breakTime">Break Time (minutes):</label>
+                <input type="number" 
+                       id="breakTime" 
+                       value="5" 
+                       min="1" 
+                       max="60" 
+                       aria-label="Break Time in Minutes">
+            </div>
+        </div>
+
+        <!-- Fullscreen Settings -->
+        <div id="fullscreenSettings" class="settings" style="display: none;">
+            <div class="setting-item">
+                <label for="fullscreenType">Timer Type:</label>
+                <select id="fullscreenType" aria-label="Fullscreen Timer Type">
+                    <option value="countdown">Countdown</option>
+                    <option value="stopwatch">Stopwatch</option>
+                </select>
+            </div>
+            <div id="countdownSettings" class="setting-item">
+                <label for="customTime">Set Time (minutes):</label>
+                <input type="number" 
+                       id="customTime" 
+                       value="30" 
+                       min="1" 
+                       max="999" 
+                       aria-label="Custom Time in Minutes">
+            </div>
+            <div class="setting-item">
+                <button id="enterFullscreen" class="fullscreen-button" aria-label="Enter Fullscreen Mode">
+                    Enter Fullscreen Mode
+                </button>
+            </div>
+        </div>
+
+        <!-- Progress Tracking -->
+        <div class="progress" role="status" aria-live="polite">
+            <p>Sessions completed: <span id="sessions">0</span></p>
+        </div>
+    </div>
+
+    <!-- Fullscreen Timer Container -->
+    <div id="fullscreenContainer" class="fullscreen-container" style="display: none;">
+        <div class="fullscreen-timer">
+            <span id="fullscreenTime" role="timer" aria-live="polite">00:00:00</span>
+            <div class="fullscreen-controls">
+                <button id="fullscreenStart" aria-label="Start Fullscreen Timer">Start</button>
+                <button id="fullscreenReset" aria-label="Reset Fullscreen Timer">Reset</button>
+                <button id="exitFullscreen" aria-label="Exit Fullscreen Mode">Exit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Elements for Notifications -->
+    <audio id="timerComplete" preload="auto">
+        <source src="timer-complete.mp3" type="audio/mpeg">
+        <source src="timer-complete.ogg" type="audio/ogg">
+    </audio>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+
+    <!-- No JavaScript Fallback -->
+    <noscript>
+        <div class="noscript-message">
+            This timer application requires JavaScript to function. 
+            Please enable JavaScript in your browser settings.
+        </div>
+    </noscript>
+</body>
+</html>
