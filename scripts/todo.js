@@ -12,6 +12,7 @@ class TodoOrganizer {
         this.updateEmptyState();
         this.setupKeyboardShortcuts();
         this.initializeMarkdown();
+        this.initializeAISupport();
     }
 
     initializeElements() {
@@ -36,6 +37,10 @@ class TodoOrganizer {
         this.markdownHint = document.querySelector('.hint-icon');
         this.writeButton = document.querySelector('[data-mode="write"]');
         this.previewButton = document.querySelector('[data-mode="preview"]');
+        this.aiButton = document.getElementById('aiSupportBtn');
+        this.aiModal = document.getElementById('aiModal');
+        this.aiLoading = document.getElementById('aiLoading');
+        this.aiSuggestions = document.getElementById('aiSuggestions');
     }
 
     setupEventListeners() {
@@ -429,6 +434,165 @@ class TodoOrganizer {
         const markdown = this.descriptionInput.value;
         const html = marked.parse(markdown); // Use marked.parse instead of marked
         this.descriptionPreview.innerHTML = html;
+    }
+
+    initializeAISupport() {
+        this.aiButton.addEventListener('click', () => this.getAISuggestions());
+        
+        // Close modal button
+        const closeBtn = this.aiModal.querySelector('.close-modal-btn');
+        closeBtn.addEventListener('click', () => this.closeAIModal());
+        
+        // Click outside to close
+        this.aiModal.addEventListener('click', (e) => {
+            if (e.target === this.aiModal) this.closeAIModal();
+        });
+    }
+
+    async getAISuggestions() {
+        // Show modal with loading state
+        this.aiModal.style.display = 'flex';
+        this.aiLoading.style.display = 'block';
+        this.aiSuggestions.style.display = 'none';
+
+        try {
+            const tasks = this.todos.map(todo => ({
+                id: todo.id,
+                title: todo.title,
+                description: todo.description,
+                completed: todo.completed
+            }));
+
+            const response = await this.callOpenAI(tasks);
+            this.displayAISuggestions(response);
+        } catch (error) {
+            this.displayAIError(error);
+        }
+    }
+
+    async callOpenAI(tasks) {
+        const API_KEY = process.env.OPENAI_API_KEY;
+        if (!API_KEY) {
+            throw new Error('OpenAI API key not found');
+        }
+
+        const API_URL = 'https://api.openai.com/v1/chat/completions';
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: "gpt-4",
+                    messages: [{
+                        role: "user",
+                        content: this.createAIPrompt(tasks)
+                    }],
+                    temperature: 0.7
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to get AI suggestions');
+            }
+
+            const data = await response.json();
+            return data.choices[0].message.content;
+        } catch (error) {
+            console.error('AI suggestion error:', error);
+            throw error;
+        }
+    }
+
+    createAIPrompt(tasks) {
+        return `
+            I have the following tasks in my todo list:
+            ${tasks.map(task => `- ${task.title}${task.description ? `: ${task.description}` : ''}`).join('\n')}
+
+            Please analyze these tasks and provide:
+            1. A suggested order of completion based on priority and efficiency
+            2. A brief explanation of the reasoning
+            3. Any additional tips for task management
+
+            Format the response in markdown with clear sections.
+        `;
+    }
+
+    displayAISuggestions(response) {
+        this.aiLoading.style.display = 'none';
+        this.aiSuggestions.style.display = 'block';
+        
+        // Parse markdown and display
+        this.aiSuggestions.innerHTML = marked.parse(response);
+
+        // Add apply button if there's a suggested order
+        const applyButton = document.createElement('button');
+        applyButton.className = 'ai-button';
+        applyButton.textContent = 'Apply Suggested Order';
+        applyButton.addEventListener('click', () => this.applyAISuggestions(response));
+        this.aiSuggestions.appendChild(applyButton);
+    }
+
+    displayAIError(error) {
+        this.aiLoading.style.display = 'none';
+        this.aiSuggestions.style.display = 'block';
+        this.aiSuggestions.innerHTML = `
+            <div class="error-message">
+                <p>Error: ${error.message || 'Failed to get AI suggestions'}</p>
+                <p>Please check your API key and try again.</p>
+            </div>
+        `;
+    }
+
+    closeAIModal() {
+        this.aiModal.style.display = 'none';
+        this.aiSuggestions.innerHTML = '';
+    }
+
+    applyAISuggestions(response) {
+        // This is a simple implementation - you might want to make it more robust
+        const lines = response.split('\n');
+        const orderedTasks = [];
+        
+        // Find ordered list in response
+        let capturingList = false;
+        for (const line of lines) {
+            if (line.match(/^\d+\.\s/)) {
+                capturingList = true;
+                const taskTitle = line.replace(/^\d+\.\s/, '').trim();
+                const matchingTask = this.todos.find(t => 
+                    t.title.toLowerCase().includes(taskTitle.toLowerCase()) ||
+                    taskTitle.toLowerCase().includes(t.title.toLowerCase())
+                );
+                if (matchingTask) {
+                    orderedTasks.push(matchingTask);
+                }
+            } else if (capturingList && !line.trim()) {
+                break;
+            }
+        }
+
+        // Reorder tasks if we found matches
+        if (orderedTasks.length > 0) {
+            this.todos = [
+                ...orderedTasks,
+                ...this.todos.filter(t => !orderedTasks.includes(t))
+            ];
+            this.renderAllTodos();
+            this.saveTodos();
+        }
+
+        this.closeAIModal();
+    }
+
+    renderAllTodos() {
+        this.todoList.innerHTML = '';
+        this.todos.forEach(todo => this.renderTodo(todo));
+        this.updateEmptyState();
     }
 }
 

@@ -61,6 +61,14 @@
             <button type="submit" class="add-button">Add Task</button>
         </form>
 
+        <!-- Add after the todo form -->
+        <div class="ai-support">
+            <button id="aiSupportBtn" class="ai-button">
+                <span class="ai-icon">🤖</span>
+                AI Support
+            </button>
+        </div>
+
         <!-- Todo List -->
         <div class="todo-container">
             <div class="list-header">
@@ -140,6 +148,23 @@
                     </div>
                 </div>
                 <button class="close-modal">Close</button>
+            </div>
+        </div>
+
+        <!-- Add the AI suggestions modal -->
+        <div class="ai-modal" id="aiModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>AI Task Analysis</h3>
+                    <button class="close-modal-btn">×</button>
+                </div>
+                <div class="modal-body">
+                    <div id="aiLoading" class="ai-loading">
+                        <div class="spinner"></div>
+                        <p>Analyzing your tasks...</p>
+                    </div>
+                    <div id="aiSuggestions" class="ai-suggestions"></div>
+                </div>
             </div>
         </div>
     </div>
