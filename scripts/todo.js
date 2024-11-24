@@ -13,6 +13,8 @@ class TodoOrganizer {
         this.setupKeyboardShortcuts();
         this.initializeMarkdown();
         this.initializeAISupport();
+        this.aiPrompt = null;
+        this.loadAIPrompt();
     }
 
     initializeElements() {
@@ -183,65 +185,49 @@ class TodoOrganizer {
     }
 
     renderTodo(todo) {
-        const clone = this.todoTemplate.content.cloneNode(true);
-        const todoItem = clone.querySelector('.todo-item');
+        const template = this.todoTemplate.content.cloneNode(true);
+        const todoItem = template.querySelector('.todo-item');
         
-        // Set todo content
+        // Set todo data and content
         todoItem.dataset.id = todo.id;
         todoItem.querySelector('.todo-title').textContent = todo.title;
-        todoItem.querySelector('.todo-description').innerHTML = marked.parse(todo.description || '');
-        todoItem.querySelector('.todo-description').classList.add('markdown-body');
-
+        
+        if (todo.description) {
+            const descriptionEl = todoItem.querySelector('.todo-description');
+            descriptionEl.innerHTML = marked.parse(todo.description);
+            descriptionEl.classList.add('markdown-body');
+        }
+        
         // Add completed class if necessary
         if (todo.completed) {
             todoItem.classList.add('completed');
         }
+        
+        // Add event listeners
+        this.addTodoEventListeners(todoItem, todo);
+        
+        // Add to list
+        this.todoList.appendChild(todoItem);
+    }
 
-        // Setup drag and drop
+    addTodoEventListeners(todoItem, todo) {
+        // Complete button
+        const completeBtn = todoItem.querySelector('.complete-button');
+        completeBtn.addEventListener('click', () => this.toggleComplete(todo.id));
+        
+        // Delete button
+        const deleteBtn = todoItem.querySelector('.delete-button');
+        deleteBtn.addEventListener('click', () => this.deleteTodo(todo.id));
+        
+        // Drag functionality
         todoItem.addEventListener('dragstart', () => {
             todoItem.classList.add('dragging');
-            this.draggedItem = todoItem;
         });
-
+        
         todoItem.addEventListener('dragend', () => {
             todoItem.classList.remove('dragging');
-            this.draggedItem = null;
-            this.updateTodoOrder();
+            this.updateTodoOrderFromDOM();
         });
-
-        // Setup buttons
-        const completeBtn = todoItem.querySelector('.complete-button');
-        const deleteBtn = todoItem.querySelector('.delete-button');
-
-        completeBtn.addEventListener('click', () => this.toggleComplete(todo.id));
-        deleteBtn.addEventListener('click', () => this.deleteTodo(todo.id));
-
-        // Add keyboard navigation for todo items
-        todoItem.setAttribute('tabindex', '0');
-        
-        todoItem.addEventListener('keydown', (e) => {
-            switch(e.key) {
-                case 'Delete':
-                    e.preventDefault();
-                    this.deleteTodo(todo.id);
-                    break;
-                case ' ':
-                    e.preventDefault();
-                    this.toggleComplete(todo.id);
-                    break;
-                case 'ArrowUp':
-                    e.preventDefault();
-                    this.moveTodoUp(todoItem);
-                    break;
-                case 'ArrowDown':
-                    e.preventDefault();
-                    this.moveTodoDown(todoItem);
-                    break;
-            }
-        });
-
-        // Add to list
-        this.todoList.insertBefore(clone, this.todoList.firstChild);
     }
 
     toggleComplete(id) {
@@ -282,13 +268,17 @@ class TodoOrganizer {
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
-    updateTodoOrder() {
-        const todoElements = [...this.todoList.querySelectorAll('.todo-item')];
+    updateTodoOrderFromDOM() {
+        // Get all todo items from the DOM
+        const todoElements = Array.from(this.todoList.querySelectorAll('.todo-item'));
+        
+        // Create new array based on DOM order
         const newTodos = todoElements.map(element => {
             const id = parseInt(element.dataset.id);
-            return this.todos.find(t => t.id === id);
-        });
+            return this.todos.find(todo => todo.id === id);
+        }).filter(Boolean); // Remove any undefined entries
         
+        // Update todos array and save
         this.todos = newTodos;
         this.saveTodos();
     }
@@ -308,14 +298,26 @@ class TodoOrganizer {
     }
 
     saveTodos() {
-        localStorage.setItem('todos', JSON.stringify(this.todos));
+        try {
+            localStorage.setItem('todos', JSON.stringify(this.todos));
+            console.log('Saved todos:', this.todos.map(t => t.title)); // Debug log
+        } catch (error) {
+            console.error('Error saving todos:', error);
+        }
     }
 
     loadTodos() {
-        const savedTodos = localStorage.getItem('todos');
-        if (savedTodos) {
-            this.todos = JSON.parse(savedTodos);
-            this.todos.forEach(todo => this.renderTodo(todo));
+        try {
+            const savedTodos = localStorage.getItem('todos');
+            if (savedTodos) {
+                this.todos = JSON.parse(savedTodos);
+                console.log('Loaded todos:', this.todos.map(t => t.title)); // Debug log
+                this.todos.forEach(todo => this.renderTodo(todo));
+                this.updateEmptyState();
+            }
+        } catch (error) {
+            console.error('Error loading todos:', error);
+            this.todos = [];
         }
     }
 
@@ -470,13 +472,51 @@ class TodoOrganizer {
         }
     }
 
+    async loadAIPrompt() {
+        try {
+            const response = await fetch('../prompt.txt');
+            this.aiPrompt = await response.text();
+            console.log('AI Prompt loaded successfully');
+        } catch (error) {
+            console.error('Error loading AI prompt:', error);
+            // Fallback prompt if file loading fails
+            this.aiPrompt = "You are a task management AI. Please analyze and prioritize the following tasks.";
+        }
+    }
+
     async callOpenAI(tasks) {
         const API_KEY = process.env.OPENAI_API_KEY;
         if (!API_KEY) {
             throw new Error('OpenAI API key not found');
         }
 
+        // Wait for prompt to be loaded if it hasn't been already
+        if (!this.aiPrompt) {
+            await this.loadAIPrompt();
+        }
+
         const API_URL = 'https://api.openai.com/v1/chat/completions';
+        
+        // Create the task list in a structured format
+        const taskList = tasks.map((task, index) => {
+            return `Task ${index + 1}: ${task.title}${
+                task.description ? ` (Description: ${task.description})` : ''
+            }${
+                task.completed ? ' (Status: Completed)' : ' (Status: Pending)'
+            }`;
+        }).join('\n');
+
+        // Combine system prompt with task list
+        const messages = [
+            {
+                role: "system",
+                content: this.aiPrompt
+            },
+            {
+                role: "user",
+                content: `Please analyze and prioritize these tasks:\n\n${taskList}\n\nProvide a detailed analysis including:\n1. Task categorization (Eisenhower Matrix)\n2. ABCDE priority assignments\n3. Ranked priority list with clear actions\n4. Additional insights for better task management`
+            }
+        ];
 
         try {
             const response = await fetch(API_URL, {
@@ -487,11 +527,9 @@ class TodoOrganizer {
                 },
                 body: JSON.stringify({
                     model: "gpt-4",
-                    messages: [{
-                        role: "user",
-                        content: this.createAIPrompt(tasks)
-                    }],
-                    temperature: 0.7
+                    messages: messages,
+                    temperature: 0.7,
+                    max_tokens: 1000
                 })
             });
 
@@ -508,33 +546,33 @@ class TodoOrganizer {
         }
     }
 
-    createAIPrompt(tasks) {
-        return `
-            I have the following tasks in my todo list:
-            ${tasks.map(task => `- ${task.title}${task.description ? `: ${task.description}` : ''}`).join('\n')}
-
-            Please analyze these tasks and provide:
-            1. A suggested order of completion based on priority and efficiency
-            2. A brief explanation of the reasoning
-            3. Any additional tips for task management
-
-            Format the response in markdown with clear sections.
-        `;
-    }
-
     displayAISuggestions(response) {
         this.aiLoading.style.display = 'none';
         this.aiSuggestions.style.display = 'block';
         
-        // Parse markdown and display
-        this.aiSuggestions.innerHTML = marked.parse(response);
+        // Create a formatted display of the AI analysis
+        const formattedResponse = this.formatAIResponse(response);
+        this.aiSuggestions.innerHTML = formattedResponse;
 
-        // Add apply button if there's a suggested order
+        // Add apply button
         const applyButton = document.createElement('button');
-        applyButton.className = 'ai-button';
-        applyButton.textContent = 'Apply Suggested Order';
+        applyButton.className = 'apply-button';
+        applyButton.innerHTML = '✨ Apply Suggested Order';
         applyButton.addEventListener('click', () => this.applyAISuggestions(response));
         this.aiSuggestions.appendChild(applyButton);
+    }
+
+    formatAIResponse(response) {
+        // Convert the raw response to HTML with better formatting
+        let html = marked.parse(response);
+        
+        // Add custom styling for different sections
+        html = html.replace(
+            /(Task Analysis and Categorization|Ranked Priority List|Insights)/g,
+            '<h3 class="ai-section-header">$1</h3>'
+        );
+        
+        return html;
     }
 
     displayAIError(error) {
@@ -554,45 +592,126 @@ class TodoOrganizer {
     }
 
     applyAISuggestions(response) {
-        // This is a simple implementation - you might want to make it more robust
-        const lines = response.split('\n');
-        const orderedTasks = [];
+        const orderedTasks = this.parseAISuggestions(response);
+        console.log('Parsed ordered tasks:', orderedTasks); // Debug log
         
-        // Find ordered list in response
-        let capturingList = false;
-        for (const line of lines) {
-            if (line.match(/^\d+\.\s/)) {
-                capturingList = true;
-                const taskTitle = line.replace(/^\d+\.\s/, '').trim();
-                const matchingTask = this.todos.find(t => 
-                    t.title.toLowerCase().includes(taskTitle.toLowerCase()) ||
-                    taskTitle.toLowerCase().includes(t.title.toLowerCase())
-                );
-                if (matchingTask) {
-                    orderedTasks.push(matchingTask);
-                }
-            } else if (capturingList && !line.trim()) {
-                break;
-            }
-        }
-
-        // Reorder tasks if we found matches
         if (orderedTasks.length > 0) {
-            this.todos = [
-                ...orderedTasks,
-                ...this.todos.filter(t => !orderedTasks.includes(t))
-            ];
-            this.renderAllTodos();
+            // Create new array for reordered tasks
+            const newTodoOrder = [];
+            
+            // First, add matched tasks in the suggested order
+            orderedTasks.forEach(suggestedTitle => {
+                const matchingTask = this.todos.find(todo => 
+                    this.normalizeText(todo.title).includes(this.normalizeText(suggestedTitle)) ||
+                    this.normalizeText(suggestedTitle).includes(this.normalizeText(todo.title))
+                );
+                
+                if (matchingTask && !newTodoOrder.includes(matchingTask)) {
+                    newTodoOrder.push(matchingTask);
+                    console.log('Matched task:', matchingTask.title); // Debug log
+                }
+            });
+            
+            // Add remaining tasks that weren't in the AI suggestion
+            this.todos.forEach(todo => {
+                if (!newTodoOrder.includes(todo)) {
+                    newTodoOrder.push(todo);
+                    console.log('Adding remaining task:', todo.title); // Debug log
+                }
+            });
+            
+            // Update the todos array
+            this.todos = [...newTodoOrder];
+            console.log('Final todo order:', this.todos.map(t => t.title)); // Debug log
+            
+            // Clear and rebuild the todo list in the DOM
+            this.todoList.innerHTML = '';
+            this.todos.forEach(todo => this.renderTodo(todo));
+            
+            // Save to localStorage
             this.saveTodos();
+            
+            // Show success notification
+            this.showNotification('Tasks reordered successfully!');
+        } else {
+            this.showNotification('Could not determine task order from AI response', 'error');
         }
-
+        
         this.closeAIModal();
     }
 
+    parseAISuggestions(response) {
+        const orderedTasks = [];
+        const lines = response.split('\n');
+        
+        // Look for the ranked priority list section
+        let capturingList = false;
+        let rankPattern = /^\d+\.\s+(?:Task \d+:|"?)(.+?)(?:"?\s+\(|$)/i;
+        
+        for (const line of lines) {
+            // Look for section headers that indicate priority list
+            if (line.toLowerCase().includes('ranked priority list') || 
+                line.toLowerCase().includes('recommended order')) {
+                capturingList = true;
+                continue;
+            }
+            
+            if (capturingList) {
+                const match = line.match(rankPattern);
+                if (match) {
+                    let taskTitle = match[1].trim();
+                    // Remove any additional markers or classifications
+                    taskTitle = taskTitle.replace(/\(.*?\)/g, '').trim();
+                    orderedTasks.push(taskTitle);
+                } else if (line.trim() === '' && orderedTasks.length > 0) {
+                    // Stop capturing when we hit an empty line after finding tasks
+                    break;
+                }
+            }
+        }
+        
+        console.log('Parsed ordered tasks:', orderedTasks);
+        return orderedTasks;
+    }
+
+    normalizeText(text) {
+        return text.toLowerCase()
+            .trim()
+            .replace(/[^\w\s]/g, '') // Remove punctuation
+            .replace(/\s+/g, ' ');    // Normalize whitespace
+    }
+
+    showNotification(message, type = 'success') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        
+        // Add to document
+        document.body.appendChild(notification);
+        
+        // Trigger animation
+        setTimeout(() => notification.classList.add('show'), 10);
+        
+        // Remove after delay
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
     renderAllTodos() {
+        // Clear the current list
         this.todoList.innerHTML = '';
-        this.todos.forEach(todo => this.renderTodo(todo));
+        
+        // Render each todo in the new order
+        this.todos.forEach(todo => {
+            this.renderTodo(todo);
+        });
+        
+        // Update empty state and save
         this.updateEmptyState();
+        this.saveTodos();
     }
 }
 

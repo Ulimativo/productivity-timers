@@ -561,7 +561,7 @@ kbd {
     font-size: 1.2em;
 }
 
-/* AI Modal */
+/* AI Modal Styles */
 .ai-modal {
     display: none;
     position: fixed;
@@ -569,25 +569,47 @@ kbd {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
     z-index: 1000;
     justify-content: center;
     align-items: center;
+    padding: 1rem;
 }
 
 .ai-modal .modal-content {
+    background-color: var(--container-bg);
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     width: 90%;
     max-width: 600px;
     max-height: 80vh;
     overflow-y: auto;
+    position: relative;
+    animation: modalSlideIn 0.3s ease;
 }
 
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 1rem;
+    padding: 1.5rem;
     border-bottom: 1px solid var(--border-color);
+    background-color: var(--container-bg);
+    border-radius: 1rem 1rem 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.modal-header h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.modal-body {
+    padding: 1.5rem;
 }
 
 .close-modal-btn {
@@ -597,11 +619,64 @@ kbd {
     cursor: pointer;
     color: var(--text-color);
     opacity: 0.7;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
 }
 
+.close-modal-btn:hover {
+    opacity: 1;
+    background-color: var(--bg-color);
+}
+
+/* AI Suggestions Content */
+.ai-suggestions {
+    display: none;
+    color: var(--text-color);
+}
+
+.ai-suggestions h1,
+.ai-suggestions h2,
+.ai-suggestions h3,
+.ai-suggestions h4 {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+}
+
+.ai-suggestions p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.ai-suggestions ul,
+.ai-suggestions ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.ai-suggestions li {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+}
+
+.ai-suggestions code {
+    background-color: var(--bg-color);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+/* Loading State */
 .ai-loading {
     text-align: center;
     padding: 2rem;
+    color: var(--text-color);
 }
 
 .spinner {
@@ -614,40 +689,183 @@ kbd {
     animation: spin 1s linear infinite;
 }
 
+/* Error Message */
+.error-message {
+    padding: 1rem;
+    background-color: var(--bg-color);
+    border-radius: 0.5rem;
+    color: #dc2626;
+    margin-bottom: 1rem;
+}
+
+/* Apply Button */
+.apply-button {
+    display: block;
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #10a37f;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 500;
+    margin-top: 1.5rem;
+    transition: all 0.2s ease;
+}
+
+.apply-button:hover {
+    background-color: #0e906f;
+    transform: translateY(-1px);
+}
+
+/* Animation */
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
 
-.ai-suggestions {
-    display: none;
-    padding: 1rem;
+/* Scrollbar Styles */
+.modal-content {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
 }
 
-.suggestion-section {
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 4px;
+}
+
+/* Dark Mode Adjustments */
+[data-theme="dark"] .ai-modal {
+    background-color: rgba(0, 0, 0, 0.85);
+}
+
+[data-theme="dark"] .modal-content {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+/* Notification Styles */
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 0.5rem;
+    background-color: var(--container-bg);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 2000;
+}
+
+.notification.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.notification.success {
+    border-left: 4px solid #10a37f;
+}
+
+.notification.error {
+    border-left: 4px solid #dc2626;
+}
+
+/* Animation for task reordering */
+.todo-item {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.todo-item.reordering {
+    opacity: 0.7;
+    transform: scale(0.98);
+}
+
+/* Highlight newly reordered items */
+.todo-item.reordered {
+    animation: highlight 1s ease;
+}
+
+@keyframes highlight {
+    0% {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    100% {
+        background-color: var(--container-bg);
+        color: var(--text-color);
+    }
+}
+
+/* AI Analysis Styling */
+.ai-section-header {
+    color: #10a37f;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #10a37f;
+}
+
+.ai-suggestions ul,
+.ai-suggestions ol {
+    margin-left: 1.5rem;
     margin-bottom: 1.5rem;
 }
 
-.suggestion-section h4 {
-    margin-bottom: 0.5rem;
-    color: #10a37f;
+.ai-suggestions li {
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
 }
 
-.suggested-order {
-    list-style: none;
-    padding: 0;
+.ai-suggestions p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
 }
 
-.suggested-order li {
-    padding: 0.5rem;
-    margin-bottom: 0.5rem;
-    background-color: var(--bg-color);
+/* Task Categories */
+.task-category {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    font-size: 0.875rem;
+    margin-right: 0.5rem;
 }
 
-.suggested-order li::before {
-    content: "→";
-    color: #10a37f;
+.category-urgent-important {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.category-important {
+    background-color: #e0e7ff;
+    color: #4f46e5;
+}
+
+.category-urgent {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.category-neither {
+    background-color: #f3f4f6;
+    color: #6b7280;
 }
