@@ -3,6 +3,7 @@ class TodoOrganizer {
         this.todos = [];
         this.isDarkMode = false;
         this.draggedItem = null;
+        this.isPreviewMode = false;
         
         this.initializeElements();
         this.setupEventListeners();
@@ -10,6 +11,7 @@ class TodoOrganizer {
         this.loadThemePreference();
         this.updateEmptyState();
         this.setupKeyboardShortcuts();
+        this.initializeMarkdown();
     }
 
     initializeElements() {
@@ -27,6 +29,13 @@ class TodoOrganizer {
         
         // Template
         this.todoTemplate = document.getElementById('todoItemTemplate');
+        
+        this.descriptionPreview = document.getElementById('descriptionPreview');
+        this.markdownModal = document.getElementById('markdownModal');
+        this.modeBtns = document.querySelectorAll('.mode-btn');
+        this.markdownHint = document.querySelector('.hint-icon');
+        this.writeButton = document.querySelector('[data-mode="write"]');
+        this.previewButton = document.querySelector('[data-mode="preview"]');
     }
 
     setupEventListeners() {
@@ -77,29 +86,69 @@ class TodoOrganizer {
 
     setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
-            // Only process shortcuts if not typing in an input
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-                return;
-            }
-
-            switch(e.key.toLowerCase()) {
-                case 'n':
-                    // Press 'N' to focus title input
-                    if (e.ctrlKey || e.metaKey) {
+            // Handle global shortcuts
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key.toLowerCase()) {
+                    case 'p':
+                        // Ctrl/Cmd + P: Toggle preview
+                        e.preventDefault();
+                        this.togglePreview();
+                        break;
+                    case 'n':
+                        // Ctrl/Cmd + N: New task
                         e.preventDefault();
                         this.titleInput.focus();
-                    }
-                    break;
-                case 'escape':
-                    // Escape to blur inputs
-                    this.titleInput.blur();
-                    this.descriptionInput.blur();
-                    break;
-                case '/':
-                    // Press '/' to focus search (if we add search functionality)
+                        break;
+                    case 'enter':
+                        // Ctrl/Cmd + Enter: Save task from anywhere
+                        e.preventDefault();
+                        if (this.titleInput.value.trim()) {
+                            this.addTodo();
+                        }
+                        break;
+                }
+            }
+
+            // Handle Escape key
+            if (e.key === 'Escape') {
+                if (this.isPreviewMode) {
                     e.preventDefault();
-                    this.titleInput.focus();
-                    break;
+                    this.togglePreview();
+                }
+                // Close any open modals here
+                this.markdownModal.style.display = 'none';
+            }
+        });
+
+        // Handle description input shortcuts
+        this.descriptionInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                if (e.ctrlKey || e.metaKey) {
+                    // Ctrl/Cmd + Enter to save
+                    e.preventDefault();
+                    this.addTodo();
+                } else if (!e.shiftKey) {
+                    // Enter for new line (default behavior)
+                    return;
+                }
+            }
+        });
+
+        // Handle title input shortcuts
+        this.titleInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    // Shift + Enter to move to description
+                    this.descriptionInput.focus();
+                } else {
+                    // Enter to add todo if description is empty
+                    if (!this.descriptionInput.value.trim()) {
+                        this.addTodo();
+                    } else {
+                        this.descriptionInput.focus();
+                    }
+                }
             }
         });
     }
@@ -135,7 +184,8 @@ class TodoOrganizer {
         // Set todo content
         todoItem.dataset.id = todo.id;
         todoItem.querySelector('.todo-title').textContent = todo.title;
-        todoItem.querySelector('.todo-description').textContent = todo.description;
+        todoItem.querySelector('.todo-description').innerHTML = marked.parse(todo.description || '');
+        todoItem.querySelector('.todo-description').classList.add('markdown-body');
 
         // Add completed class if necessary
         if (todo.completed) {
@@ -167,13 +217,11 @@ class TodoOrganizer {
         todoItem.addEventListener('keydown', (e) => {
             switch(e.key) {
                 case 'Delete':
-                case 'Backspace':
-                    if (e.ctrlKey || e.metaKey) {
-                        this.deleteTodo(todo.id);
-                    }
+                    e.preventDefault();
+                    this.deleteTodo(todo.id);
                     break;
-                case 'Enter':
                 case ' ':
+                    e.preventDefault();
                     this.toggleComplete(todo.id);
                     break;
                 case 'ArrowUp':
@@ -299,6 +347,88 @@ class TodoOrganizer {
             todoItem.focus();
             this.updateTodoOrder();
         }
+    }
+
+    initializeMarkdown() {
+        // Configure marked options
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            headerIds: false,
+            mangle: false
+        });
+
+        // Mode toggle
+        this.modeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.modeBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const mode = btn.dataset.mode;
+                if (mode === 'preview') {
+                    this.showPreview();
+                } else {
+                    this.showEditor();
+                }
+            });
+        });
+
+        // Live preview on input
+        this.descriptionInput.addEventListener('input', () => {
+            if (this.descriptionPreview.style.display === 'block') {
+                this.updatePreview();
+            }
+        });
+
+        // Markdown help
+        this.markdownHint.addEventListener('click', () => {
+            this.markdownModal.style.display = 'flex';
+        });
+
+        // Close modal
+        this.markdownModal.querySelector('.close-modal').addEventListener('click', () => {
+            this.markdownModal.style.display = 'none';
+        });
+
+        // Click outside to close
+        this.markdownModal.addEventListener('click', (e) => {
+            if (e.target === this.markdownModal) {
+                this.markdownModal.style.display = 'none';
+            }
+        });
+    }
+
+    togglePreview() {
+        this.isPreviewMode = !this.isPreviewMode;
+        if (this.isPreviewMode) {
+            this.showPreview();
+            this.previewButton.classList.add('active');
+            this.writeButton.classList.remove('active');
+        } else {
+            this.showEditor();
+            this.writeButton.classList.add('active');
+            this.previewButton.classList.remove('active');
+        }
+    }
+
+    showPreview() {
+        this.updatePreview();
+        this.descriptionInput.style.display = 'none';
+        this.descriptionPreview.style.display = 'block';
+        this.isPreviewMode = true;
+    }
+
+    showEditor() {
+        this.descriptionInput.style.display = 'block';
+        this.descriptionPreview.style.display = 'none';
+        this.isPreviewMode = false;
+        this.descriptionInput.focus();
+    }
+
+    updatePreview() {
+        const markdown = this.descriptionInput.value;
+        const html = marked.parse(markdown); // Use marked.parse instead of marked
+        this.descriptionPreview.innerHTML = html;
     }
 }
 

@@ -10,6 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Styles -->
     <link rel="stylesheet" href="../styles/todo.css">
+    <!-- Add in the head section, before your scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
     <!-- Back to Home Link -->
@@ -33,10 +35,28 @@
                        placeholder="What needs to be done?"
                        required
                        maxlength="100">
-                <textarea id="todoDescription" 
-                          placeholder="Add a description (optional)"
-                          rows="2"
-                          maxlength="200"></textarea>
+                <div class="description-container">
+                    <div class="description-header">
+                        <div class="mode-toggle">
+                            <button type="button" class="mode-btn active" data-mode="write">Write</button>
+                            <button type="button" class="mode-btn" data-mode="preview">Preview</button>
+                        </div>
+                        <div class="markdown-hint">
+                            Supports Markdown
+                            <span class="hint-icon" title="Markdown Syntax">?</span>
+                        </div>
+                    </div>
+                    <textarea id="todoDescription" 
+                              placeholder="Add a description (optional) - Supports Markdown
+# Heading
+**Bold** or *Italic*
+- List item
+- [ ] Task
+[Link](url)"
+                              rows="4"
+                              maxlength="500"></textarea>
+                    <div id="descriptionPreview" class="description-preview markdown-body"></div>
+                </div>
             </div>
             <button type="submit" class="add-button">Add Task</button>
         </form>
@@ -71,12 +91,56 @@
             <ul class="shortcuts-list">
                 <li><kbd>Enter</kbd> Add task (from title)</li>
                 <li><kbd>Shift</kbd> + <kbd>Enter</kbd> Move to description</li>
-                <li><kbd>Ctrl</kbd> + <kbd>N</kbd> Focus title input</li>
-                <li><kbd>/</kbd> Focus title input</li>
-                <li><kbd>↑</kbd> / <kbd>↓</kbd> Reorder selected task</li>
-                <li><kbd>Space</kbd> / <kbd>Enter</kbd> Toggle task complete</li>
-                <li><kbd>Ctrl</kbd> + <kbd>Delete</kbd> Delete task</li>
+                <li><kbd>Ctrl</kbd> + <kbd>Enter</kbd> Save task (from description)</li>
+                <li><kbd>Ctrl</kbd> + <kbd>P</kbd> Toggle preview</li>
+                <li><kbd>Ctrl</kbd> + <kbd>N</kbd> New task</li>
+                <li><kbd>↑</kbd> / <kbd>↓</kbd> Navigate tasks</li>
+                <li><kbd>Space</kbd> Toggle task complete</li>
+                <li><kbd>Delete</kbd> Delete selected task</li>
+                <li><kbd>Esc</kbd> Exit preview/modal</li>
             </ul>
+        </div>
+
+        <!-- Add Markdown syntax guide modal -->
+        <div class="markdown-modal" id="markdownModal">
+            <div class="modal-content">
+                <h3>Markdown Syntax Guide</h3>
+                <div class="syntax-grid">
+                    <div class="syntax-item">
+                        <code># Heading</code>
+                        <span>Creates a heading</span>
+                    </div>
+                    <div class="syntax-item">
+                        <code>**Bold**</code>
+                        <span>Makes text bold</span>
+                    </div>
+                    <div class="syntax-item">
+                        <code>*Italic*</code>
+                        <span>Makes text italic</span>
+                    </div>
+                    <div class="syntax-item">
+                        <code>[Link](url)</code>
+                        <span>Creates a link</span>
+                    </div>
+                    <div class="syntax-item">
+                        <code>- List item</code>
+                        <span>Creates a list</span>
+                    </div>
+                    <div class="syntax-item">
+                        <code>1. Numbered item</code>
+                        <span>Creates a numbered list</span>
+                    </div>
+                    <div class="syntax-item">
+                        <code>- [ ] Task</code>
+                        <span>Creates a task checkbox</span>
+                    </div>
+                    <div class="syntax-item">
+                        <code>```code```</code>
+                        <span>Creates a code block</span>
+                    </div>
+                </div>
+                <button class="close-modal">Close</button>
+            </div>
         </div>
     </div>
 
