@@ -15,6 +15,8 @@ class TodoOrganizer {
         this.initializeAISupport();
         this.aiPrompt = null;
         this.loadAIPrompt();
+        this.renderAllTodos();
+        this.todoPriority = document.getElementById('todoPriority');
     }
 
     initializeElements() {
@@ -58,12 +60,18 @@ class TodoOrganizer {
         // Drag and drop events for the container
         this.todoList.addEventListener('dragover', (e) => {
             e.preventDefault();
-            const afterElement = this.getDragAfterElement(this.todoList, e.clientY);
             const draggable = document.querySelector('.dragging');
+            if (!draggable) return;
+
+            // Find the closest priority-tasks container
+            const priorityTasks = e.target.closest('.priority-tasks');
+            if (!priorityTasks) return;
+
+            const afterElement = this.getDragAfterElement(priorityTasks, e.clientY);
             if (afterElement) {
-                this.todoList.insertBefore(draggable, afterElement);
+                priorityTasks.insertBefore(draggable, afterElement);
             } else {
-                this.todoList.appendChild(draggable);
+                priorityTasks.appendChild(draggable);
             }
         });
 
@@ -164,93 +172,95 @@ class TodoOrganizer {
         const title = this.titleInput.value.trim();
         const description = this.descriptionInput.value.trim();
         
-        if (!title) return;
-
-        const todo = {
-            id: Date.now(),
-            title,
-            description,
-            completed: false,
-            createdAt: new Date().toISOString()
-        };
-
-        this.todos.unshift(todo);
-        this.renderTodo(todo);
-        this.saveTodos();
-        this.updateEmptyState();
-        
-        // Reset form and focus title input for quick entry
-        this.todoForm.reset();
-        this.titleInput.focus();
+        if (title) {
+            const todo = {
+                id: Date.now(),
+                title,
+                description,
+                completed: false,
+                priority: 'C' // Default priority
+            };
+            
+            this.todos.push(todo);
+            this.renderAllTodos();
+            this.saveTodos();
+            
+            // Clear inputs
+            this.titleInput.value = '';
+            this.descriptionInput.value = '';
+            this.titleInput.focus();
+        }
     }
 
-    renderTodo(todo) {
-        const template = this.todoTemplate.content.cloneNode(true);
-        const todoItem = template.querySelector('.todo-item');
+    renderTodo(todo, container) {
+        const li = document.createElement('li');
+        li.className = `todo-item${todo.completed ? ' completed' : ''}`;
+        li.draggable = true;
+        li.dataset.id = todo.id;
         
-        // Set todo data and content
-        todoItem.dataset.id = todo.id;
-        todoItem.querySelector('.todo-title').textContent = todo.title;
-        
-        if (todo.description) {
-            const descriptionEl = todoItem.querySelector('.todo-description');
-            descriptionEl.innerHTML = marked.parse(todo.description);
-            descriptionEl.classList.add('markdown-body');
-        }
-        
-        // Add completed class if necessary
-        if (todo.completed) {
-            todoItem.classList.add('completed');
-        }
-        
-        // Add event listeners
-        this.addTodoEventListeners(todoItem, todo);
-        
-        // Add to list
-        this.todoList.appendChild(todoItem);
-    }
+        li.innerHTML = `
+            <div class="todo-content">
+                <div class="todo-header">
+                    <span class="priority-badge priority-${todo.priority}">${todo.priority}</span>
+                    <h3 class="todo-title">${todo.title}</h3>
+                    <div class="todo-actions">
+                        <button class="complete-button" aria-label="Mark as complete">✓</button>
+                        <button class="delete-button" aria-label="Delete task">×</button>
+                    </div>
+                </div>
+                ${todo.description ? `<p class="todo-description">${marked.parse(todo.description)}</p>` : ''}
+            </div>
+            <div class="drag-handle" aria-label="Drag to reorder">⋮⋮</div>
+        `;
 
-    addTodoEventListeners(todoItem, todo) {
-        // Complete button
-        const completeBtn = todoItem.querySelector('.complete-button');
-        completeBtn.addEventListener('click', () => this.toggleComplete(todo.id));
-        
-        // Delete button
-        const deleteBtn = todoItem.querySelector('.delete-button');
-        deleteBtn.addEventListener('click', () => this.deleteTodo(todo.id));
-        
-        // Drag functionality
-        todoItem.addEventListener('dragstart', () => {
-            todoItem.classList.add('dragging');
+        // Update drag events
+        li.addEventListener('dragstart', () => {
+            li.classList.add('dragging');
+            this.draggedItem = li;
         });
         
-        todoItem.addEventListener('dragend', () => {
-            todoItem.classList.remove('dragging');
-            this.updateTodoOrderFromDOM();
+        li.addEventListener('dragend', () => {
+            li.classList.remove('dragging');
+            
+            // Find the new priority section
+            const newPrioritySection = li.closest('.priority-section');
+            if (newPrioritySection) {
+                // Get all priority sections and find the index of the new section
+                const allSections = Array.from(this.todoList.children);
+                const sectionIndex = allSections.indexOf(newPrioritySection);
+                const newPriority = ['A', 'B', 'C', 'D', 'E'][sectionIndex];
+                
+                // Update the todo's priority
+                const todoId = parseInt(li.dataset.id);
+                const todo = this.todos.find(t => t.id === todoId);
+                if (todo) {
+                    todo.priority = newPriority;
+                    this.saveTodos();
+                }
+            }
+            this.draggedItem = null;
         });
+
+        // Add other event listeners
+        li.querySelector('.delete-button').addEventListener('click', () => this.deleteTodo(todo.id));
+        li.querySelector('.complete-button').addEventListener('click', () => this.toggleComplete(todo.id));
+
+        container.appendChild(li);
     }
 
     toggleComplete(id) {
-        const todo = this.todos.find(t => t.id === id);
+        const todo = this.todos.find(todo => todo.id === id);
         if (todo) {
             todo.completed = !todo.completed;
-            const todoItem = this.todoList.querySelector(`[data-id="${id}"]`);
-            todoItem.classList.toggle('completed');
+            this.renderAllTodos();
             this.saveTodos();
         }
     }
 
     deleteTodo(id) {
-        const todoItem = this.todoList.querySelector(`[data-id="${id}"]`);
-        if (todoItem) {
-            todoItem.classList.add('fade-out');
-            todoItem.addEventListener('animationend', () => {
-                todoItem.remove();
-                this.todos = this.todos.filter(t => t.id !== id);
-                this.saveTodos();
-                this.updateEmptyState();
-            });
-        }
+        this.todos = this.todos.filter(todo => todo.id !== id);
+        this.renderAllTodos();
+        this.saveTodos();
     }
 
     getDragAfterElement(container, y) {
@@ -266,21 +276,6 @@ class TodoOrganizer {
                 return closest;
             }
         }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-
-    updateTodoOrderFromDOM() {
-        // Get all todo items from the DOM
-        const todoElements = Array.from(this.todoList.querySelectorAll('.todo-item'));
-        
-        // Create new array based on DOM order
-        const newTodos = todoElements.map(element => {
-            const id = parseInt(element.dataset.id);
-            return this.todos.find(todo => todo.id === id);
-        }).filter(Boolean); // Remove any undefined entries
-        
-        // Update todos array and save
-        this.todos = newTodos;
-        this.saveTodos();
     }
 
     updateEmptyState() {
@@ -701,16 +696,64 @@ class TodoOrganizer {
     }
 
     renderAllTodos() {
-        // Clear the current list
         this.todoList.innerHTML = '';
         
-        // Render each todo in the new order
+        // Create priority sections
+        const prioritySections = {
+            A: this.createPrioritySection('A - Must do', 'High priority tasks with severe consequences if not completed'),
+            B: this.createPrioritySection('B - Should do', 'Medium priority tasks with moderate consequences'),
+            C: this.createPrioritySection('C - Nice to do', 'Low priority tasks with minor consequences'),
+            D: this.createPrioritySection('D - Delegate', 'Tasks that can be delegated to others'),
+            E: this.createPrioritySection('E - Eliminate', 'Tasks to eliminate or defer indefinitely')
+        };
+
+        // Add priority sections to the list
+        Object.values(prioritySections).forEach(section => {
+            this.todoList.appendChild(section);
+        });
+
+        // Sort and render todos into their sections
         this.todos.forEach(todo => {
-            this.renderTodo(todo);
+            const priority = todo.priority || 'C'; // Default to C if no priority set
+            const section = prioritySections[priority].querySelector('.priority-tasks');
+            this.renderTodo(todo, section);
+        });
+
+        this.updateEmptyState();
+        this.saveTodos();
+    }
+
+    createPrioritySection(title, description) {
+        const section = document.createElement('div');
+        section.className = 'priority-section';
+        section.innerHTML = `
+            <div class="priority-header">
+                <h3>${title}</h3>
+                <p class="priority-description">${description}</p>
+            </div>
+            <ul class="priority-tasks"></ul>
+        `;
+        return section;
+    }
+
+    updateTodoOrder() {
+        const newOrder = [];
+        document.querySelectorAll('.priority-section').forEach(section => {
+            const tasks = section.querySelector('.priority-tasks');
+            const sectionPriority = ['A', 'B', 'C', 'D', 'E'][
+                Array.from(this.todoList.children).indexOf(section)
+            ];
+            
+            tasks.querySelectorAll('.todo-item').forEach(item => {
+                const todo = this.todos.find(t => t.id === parseInt(item.dataset.id));
+                if (todo) {
+                    todo.priority = sectionPriority;
+                    newOrder.push(todo);
+                }
+            });
         });
         
-        // Update empty state and save
-        this.updateEmptyState();
+        this.todos = newOrder;
         this.saveTodos();
     }
 }
