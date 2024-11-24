@@ -58,6 +58,7 @@ body {
     max-width: 550px;
     width: 90%;
     transition: all 0.3s ease;
+    margin-top: 2rem;
 }
 
 h1 {
@@ -569,4 +570,43 @@ kbd {
 
 .history-item:hover {
     background-color: var(--bg-color);
+}
+
+/* Back Link */
+.back-link {
+    position: fixed;
+    top: 1.5rem;
+    left: 1.5rem;
+    text-decoration: none;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    z-index: 100;
+}
+
+.back-link:hover {
+    transform: translateX(-4px);
+    background-color: var(--bg-color);
+    box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+/* Adjust container margin for back link */
+.container {
+    margin-top: 2rem;
+}
+
+@media (max-width: 640px) {
+    .back-link {
+        top: 1rem;
+        left: 1rem;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+    }
 }

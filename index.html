@@ -3,154 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Productivity Timer with Pomodoro, Two-Minute Rule, and Fullscreen modes">
-    <title>Productivity Timer</title>
-    <link rel="stylesheet" href="styles.css">
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="favicon.png">
-    <!-- Google Fonts -->
+    <title>Productivity Suite</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/index.css">
 </head>
 <body>
     <div class="container">
-        <h1>Productivity Timer</h1>
+        <header>
+            <h1>Productivity Suite</h1>
+            <p>Choose your productivity tool</p>
+        </header>
 
-        <!-- Mode Selection and Theme Toggle -->
-        <div class="timer-mode">
-            <select id="modeSelect" class="mode-select" aria-label="Timer Mode Selection">
-                <option value="pomodoro">Pomodoro Timer</option>
-                <option value="twoMinute">Two-Minute Rule</option>
-                <option value="fullscreen">Fullscreen Timer</option>
-            </select>
-            <button id="darkModeToggle" class="theme-toggle" aria-label="Toggle Dark Mode">🌙</button>
+        <div class="app-grid">
+            <a href="pages/timer.html" class="app-tile">
+                <div class="tile-content">
+                    <div class="tile-icon">⏱️</div>
+                    <h2>Productivity Timer</h2>
+                    <p>Pomodoro timer, two-minute rule, and fullscreen countdown</p>
+                    <ul class="feature-list">
+                        <li>Pomodoro Technique</li>
+                        <li>Two-Minute Rule</li>
+                        <li>Fullscreen Timer</li>
+                    </ul>
+                    <span class="tile-cta">Launch App →</span>
+                </div>
+            </a>
+
+            <a href="pages/todo.html" class="app-tile">
+                <div class="tile-content">
+                    <div class="tile-icon">✓</div>
+                    <h2>To-Do Organizer</h2>
+                    <p>Organize tasks with priority levels and categories</p>
+                    <ul class="feature-list">
+                        <li>Task Categories</li>
+                        <li>Priority Levels</li>
+                        <li>Progress Tracking</li>
+                    </ul>
+                    <span class="tile-cta">Launch App →</span>
+                </div>
+            </a>
         </div>
 
-        <!-- Main Timer Display -->
-        <div class="timer-display" role="timer" aria-live="polite">
-            <span id="minutes">25</span>:<span id="seconds">00</span>
-        </div>
-
-        <!-- Timer Controls -->
-        <div class="controls">
-            <button id="start" aria-label="Start Timer">Start</button>
-            <button id="pause" aria-label="Pause Timer">Pause</button>
-            <button id="reset" aria-label="Reset Timer">Reset</button>
-            <div class="keyboard-shortcuts">
-                <button class="help-button" aria-label="Show Keyboard Shortcuts" title="Keyboard Shortcuts">
-                    ⌨️
-                </button>
-            </div>
-        </div>
-
-        <!-- Pomodoro Settings -->
-        <div class="settings" id="pomodoroSettings">
-            <div class="setting-item">
-                <label for="workTime">Work Time (minutes):</label>
-                <input type="number" 
-                       id="workTime" 
-                       value="25" 
-                       min="1" 
-                       max="120" 
-                       aria-label="Work Time in Minutes">
-            </div>
-            <div class="setting-item">
-                <label for="breakTime">Break Time (minutes):</label>
-                <input type="number" 
-                       id="breakTime" 
-                       value="5" 
-                       min="1" 
-                       max="60" 
-                       aria-label="Break Time in Minutes">
-            </div>
-        </div>
-
-        <!-- Fullscreen Settings -->
-        <div id="fullscreenSettings" class="settings" style="display: none;">
-            <div class="setting-item">
-                <label for="fullscreenType">Timer Type:</label>
-                <select id="fullscreenType" aria-label="Fullscreen Timer Type">
-                    <option value="countdown">Countdown</option>
-                    <option value="stopwatch">Stopwatch</option>
-                </select>
-            </div>
-            <div id="countdownSettings" class="setting-item">
-                <label for="customTime">Set Time (minutes):</label>
-                <input type="number" 
-                       id="customTime" 
-                       value="30" 
-                       min="1" 
-                       max="999" 
-                       aria-label="Custom Time in Minutes">
-            </div>
-            <div class="setting-item">
-                <button id="enterFullscreen" class="fullscreen-button" aria-label="Enter Fullscreen Mode">
-                    Enter Fullscreen Mode
-                </button>
-            </div>
-        </div>
-
-        <!-- Progress Tracking -->
-        <div class="progress" role="status" aria-live="polite">
-            <p>Sessions completed: <span id="sessions">0</span></p>
-        </div>
-
-        <!-- Add after timer display -->
-        <div class="progress-bar">
-            <div class="progress-fill"></div>
-        </div>
-
-        <!-- Add after progress section -->
-        <div class="session-history">
-            <h3>Recent Sessions</h3>
-            <div class="history-list" id="historyList">
-                <!-- Will be populated by JavaScript -->
-            </div>
-        </div>
+        <footer>
+            <button id="darkModeToggle" class="theme-toggle" aria-label="Toggle Dark Mode">
+                🌙
+            </button>
+        </footer>
     </div>
+    <script>
+        // Simple dark mode toggle
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+        
+        function setTheme(isDark) {
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            darkModeToggle.textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('darkMode', isDark);
+        }
 
-    <!-- Fullscreen Timer Container -->
-    <div id="fullscreenContainer" class="fullscreen-container" style="display: none;">
-        <div class="fullscreen-timer">
-            <span id="fullscreenTime" role="timer" aria-live="polite">00:00:00</span>
-            <div class="fullscreen-controls">
-                <button id="fullscreenStart" aria-label="Start Fullscreen Timer">Start</button>
-                <button id="fullscreenReset" aria-label="Reset Fullscreen Timer">Reset</button>
-                <button id="exitFullscreen" aria-label="Exit Fullscreen Mode">Exit</button>
-            </div>
-        </div>
-    </div>
+        // Initialize theme
+        const savedTheme = localStorage.getItem('darkMode');
+        setTheme(savedTheme === 'true' || (savedTheme === null && prefersDark.matches));
 
-    <!-- Audio Elements for Notifications -->
-    <audio id="timerComplete" preload="auto">
-        <source src="timer-complete.mp3" type="audio/mpeg">
-        <source src="timer-complete.ogg" type="audio/ogg">
-    </audio>
-
-    <!-- Scripts -->
-    <script src="script.js"></script>
-
-    <!-- No JavaScript Fallback -->
-    <noscript>
-        <div class="noscript-message">
-            This timer application requires JavaScript to function. 
-            Please enable JavaScript in your browser settings.
-        </div>
-    </noscript>
-
-    <!-- Add modal for keyboard shortcuts -->
-    <div class="shortcuts-modal" id="shortcutsModal">
-        <div class="modal-content">
-            <h2>Keyboard Shortcuts</h2>
-            <ul class="shortcuts-list">
-                <li><span>Start/Pause Timer</span><kbd>Space</kbd></li>
-                <li><span>Reset Timer</span><kbd>R</kbd></li>
-                <li><span>Toggle Fullscreen</span><kbd>F</kbd></li>
-                <li><span>Exit Fullscreen/Modal</span><kbd>Esc</kbd></li>
-            </ul>
-            <button class="close-modal">Close</button>
-        </div>
-    </div>
+        darkModeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') !== 'dark';
+            setTheme(isDark);
+        });
+    </script>
 </body>
 </html>

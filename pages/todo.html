@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do Organizer</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="../styles/todo.css">
+</head>
+<body>
+    <!-- Back to Home Link -->
+    <a href="../index.html" class="back-link">
+        ← Back to Apps
+    </a>
+
+    <div class="container">
+        <h1>To-Do Organizer</h1>
+        
+        <!-- Theme Toggle -->
+        <button id="darkModeToggle" class="theme-toggle" aria-label="Toggle Dark Mode">
+            🌙
+        </button>
+
+        <!-- Add Todo Form -->
+        <form id="todoForm" class="todo-form">
+            <div class="input-group">
+                <input type="text" 
+                       id="todoTitle" 
+                       placeholder="What needs to be done?"
+                       required
+                       maxlength="100">
+                <textarea id="todoDescription" 
+                          placeholder="Add a description (optional)"
+                          rows="2"
+                          maxlength="200"></textarea>
+            </div>
+            <button type="submit" class="add-button">Add Task</button>
+        </form>
+
+        <!-- Todo List -->
+        <div class="todo-container">
+            <div class="list-header">
+                <h2>Tasks</h2>
+                <p class="todo-count">0 tasks</p>
+            </div>
+            
+            <!-- Drag and Drop List -->
+            <ul id="todoList" class="todo-list">
+                <!-- Tasks will be added here by JavaScript -->
+            </ul>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state">
+                <p>🎉 No tasks yet! Add your first task above.</p>
+            </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="info-panel">
+            <p>Drag and drop tasks to reorder by priority</p>
+            <p>Higher items have higher priority</p>
+        </div>
+
+        <!-- Add this after the info-panel div -->
+        <div class="keyboard-shortcuts">
+            <h3>Keyboard Shortcuts</h3>
+            <ul class="shortcuts-list">
+                <li><kbd>Enter</kbd> Add task (from title)</li>
+                <li><kbd>Shift</kbd> + <kbd>Enter</kbd> Move to description</li>
+                <li><kbd>Ctrl</kbd> + <kbd>N</kbd> Focus title input</li>
+                <li><kbd>/</kbd> Focus title input</li>
+                <li><kbd>↑</kbd> / <kbd>↓</kbd> Reorder selected task</li>
+                <li><kbd>Space</kbd> / <kbd>Enter</kbd> Toggle task complete</li>
+                <li><kbd>Ctrl</kbd> + <kbd>Delete</kbd> Delete task</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Todo Item Template -->
+    <template id="todoItemTemplate">
+        <li class="todo-item" draggable="true">
+            <div class="todo-content">
+                <div class="todo-header">
+                    <h3 class="todo-title"></h3>
+                    <div class="todo-actions">
+                        <button class="complete-button" aria-label="Mark as complete">✓</button>
+                        <button class="delete-button" aria-label="Delete task">×</button>
+                    </div>
+                </div>
+                <p class="todo-description"></p>
+            </div>
+            <div class="drag-handle" aria-label="Drag to reorder">⋮⋮</div>
+        </li>
+    </template>
+
+    <!-- Scripts -->
+    <script src="../scripts/todo.js"></script>
+</body>
+</html>

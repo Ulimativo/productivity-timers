@@ -1,0 +1,368 @@
+:root {
+    --bg-color: #f3f4f6;
+    --text-color: #1f2937;
+    --container-bg: #ffffff;
+    --border-color: #e5e7eb;
+    --primary-color: #4f46e5;
+    --primary-hover: #4338ca;
+    --success-color: #059669;
+    --danger-color: #dc2626;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] {
+    --bg-color: #111827;
+    --text-color: #f9fafb;
+    --container-bg: #1f2937;
+    --border-color: #374151;
+    --primary-color: #6366f1;
+    --primary-hover: #4f46e5;
+    --success-color: #10b981;
+    --danger-color: #ef4444;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.5;
+    min-height: 100vh;
+    padding: 2rem;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: var(--container-bg);
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px var(--shadow-color);
+}
+
+/* Header and Theme Toggle */
+h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.theme-toggle {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: none;
+    border: 1px solid var(--border-color);
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 1.25rem;
+    transition: all 0.2s ease;
+}
+
+/* Todo Form */
+.todo-form {
+    margin-bottom: 2rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.input-group {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+input[type="text"],
+textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background-color: var(--container-bg);
+    color: var(--text-color);
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.add-button {
+    padding: 0.75rem 1.5rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    align-self: flex-start;
+}
+
+.add-button:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+/* Todo List */
+.todo-container {
+    background-color: var(--bg-color);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.todo-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.todo-item {
+    background-color: var(--container-bg);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: move;
+    box-shadow: 0 1px 2px var(--shadow-color);
+    transition: all 0.2s ease;
+}
+
+.todo-item.dragging {
+    opacity: 0.5;
+    box-shadow: 0 4px 8px var(--shadow-color);
+}
+
+.todo-content {
+    flex-grow: 1;
+}
+
+.todo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.todo-title {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.todo-description {
+    font-size: 0.875rem;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+.todo-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.complete-button,
+.delete-button {
+    padding: 0.25rem 0.5rem;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.complete-button {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.delete-button {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.drag-handle {
+    color: var(--text-color);
+    opacity: 0.5;
+    cursor: move;
+    user-select: none;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-color);
+    opacity: 0.7;
+}
+
+/* Info Panel */
+.info-panel {
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--text-color);
+    opacity: 0.7;
+}
+
+/* Back Link */
+.back-link {
+    position: fixed;
+    top: 1.5rem;
+    left: 1.5rem;
+    text-decoration: none;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.back-link:hover {
+    transform: translateX(-4px);
+    background-color: var(--bg-color);
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+    body {
+        padding: 1rem;
+    }
+
+    .container {
+        padding: 1rem;
+        margin: 1rem auto;
+    }
+
+    .todo-form {
+        flex-direction: column;
+    }
+
+    .add-button {
+        width: 100%;
+    }
+
+    .theme-toggle {
+        top: 1rem;
+        right: 1rem;
+    }
+
+    .back-link {
+        top: 1rem;
+        left: 1rem;
+    }
+}
+
+/* Add to your existing CSS */
+.todo-item.completed {
+    opacity: 0.7;
+}
+
+.todo-item.completed .todo-title {
+    text-decoration: line-through;
+}
+
+.todo-item.fade-out {
+    animation: fadeOut 0.3s ease forwards;
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+}
+
+.todo-item {
+    animation: slideIn 0.3s ease forwards;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Keyboard Shortcuts Display */
+.keyboard-shortcuts {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.keyboard-shortcuts h3 {
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+.shortcuts-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    list-style: none;
+}
+
+.shortcuts-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+kbd {
+    background-color: var(--bg-color);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-family: monospace;
+    font-size: 0.75rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 0 var(--border-color);
+    min-width: 1.5rem;
+    text-align: center;
+}
+
+/* Focus styles for keyboard navigation */
+.todo-item:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.todo-item:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
