@@ -17,6 +17,7 @@ class TodoOrganizer {
         this.loadAIPrompt();
         this.renderAllTodos();
         this.todoPriority = document.getElementById('todoPriority');
+        this.initializeDataControls();
     }
 
     initializeElements() {
@@ -45,6 +46,9 @@ class TodoOrganizer {
         this.aiModal = document.getElementById('aiModal');
         this.aiLoading = document.getElementById('aiLoading');
         this.aiSuggestions = document.getElementById('aiSuggestions');
+        this.exportBtn = document.getElementById('exportBtn');
+        this.importBtn = document.getElementById('importBtn');
+        this.importInput = document.getElementById('importInput');
     }
 
     setupEventListeners() {
@@ -755,6 +759,91 @@ class TodoOrganizer {
         
         this.todos = newOrder;
         this.saveTodos();
+    }
+
+    initializeDataControls() {
+        this.exportBtn.addEventListener('click', () => this.exportTasks());
+        this.importBtn.addEventListener('click', () => this.importInput.click());
+        this.importInput.addEventListener('change', (e) => this.importTasks(e));
+    }
+
+    exportTasks() {
+        // Create export data structure
+        const exportData = {
+            version: '1.0',
+            timestamp: new Date().toISOString(),
+            tasks: this.todos
+        };
+
+        // Convert to JSON string
+        const jsonString = JSON.stringify(exportData, null, 2);
+        
+        // Create blob and download link
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        // Create download link
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `tasks-${new Date().toISOString().split('T')[0]}.json`;
+        
+        // Trigger download
+        document.body.appendChild(a);
+        a.click();
+        
+        // Cleanup
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        this.showNotification('Tasks exported successfully!');
+    }
+
+    async importTasks(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+            
+            // Validate import data
+            if (!data.tasks || !Array.isArray(data.tasks)) {
+                throw new Error('Invalid task data format');
+            }
+
+            // Validate each task
+            const validTasks = data.tasks.filter(task => {
+                return task.title && 
+                       typeof task.title === 'string' &&
+                       ['A', 'B', 'C', 'D', 'E'].includes(task.priority);
+            });
+
+            // Merge with existing tasks or replace them
+            const shouldMerge = confirm('Do you want to merge with existing tasks? Click Cancel to replace all tasks.');
+            
+            if (shouldMerge) {
+                // Add new IDs to avoid conflicts
+                const importedTasks = validTasks.map(task => ({
+                    ...task,
+                    id: Date.now() + Math.random()
+                }));
+                this.todos = [...this.todos, ...importedTasks];
+            } else {
+                this.todos = validTasks;
+            }
+
+            // Update display
+            this.renderAllTodos();
+            this.saveTodos();
+            this.showNotification(`${validTasks.length} tasks imported successfully!`);
+
+        } catch (error) {
+            console.error('Import error:', error);
+            this.showNotification('Error importing tasks. Please check the file format.', 'error');
+        }
+
+        // Reset file input
+        event.target.value = '';
     }
 }
 

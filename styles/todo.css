@@ -934,3 +934,32 @@ kbd {
     opacity: 0.5;
     font-style: italic;
 }
+
+.data-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    justify-content: center;
+}
+
+.data-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.data-button:hover {
+    background-color: var(--bg-color);
+    transform: translateY(-1px);
+}
+
+.data-button span {
+    font-size: 1.1rem;
+}
